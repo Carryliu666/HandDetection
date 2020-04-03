@@ -1,3 +1,4 @@
+#-*- coding:utf8 -*-
 import os
 import pathlib
 import numpy as np
@@ -113,8 +114,54 @@ def show_inference(model, image_path):
 
   plt.imshow(Image.fromarray(image_np))
   plt.show()
+def video_show_inference(model, image_np):
+  # the array based representation of the image will be used later in order to prepare the
+  # result image with boxes and labels on it.
+
+  # Actual detection.
+  output_dict = run_inference_for_single_image(model, image_np)
+  # Visualization of the results of a detection.
+  vis_util.visualize_boxes_and_labels_on_image_array(
+      image_np,
+      output_dict['detection_boxes'],
+      output_dict['detection_classes'],
+      output_dict['detection_scores'],
+      category_index,
+      instance_masks=output_dict.get('detection_masks_reframed', None),
+      use_normalized_coordinates=True,
+      line_thickness=8)
+
+  plt.imshow(Image.fromarray(image_np))
+  plt.show()
 
 
-for image_path in TEST_IMAGE_PATHS:
-  show_inference(detection_model, image_path)
+cap = cv2.VideoCapture(0)
+width = 1280
+height = 720
+w = 360
+#设置摄像头捕获的分辨率
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+#设置要保存的视频编码,分辨率和帧率
+video = cv2.VideoWriter("HandVideo.avi",cv2.VideoWriter_fourcc('M','P','4','2'),20,(1280,720))
+while(cap.isOpened()):
+    #成功则ret为True, frame是数组
+    ret,frame=cap.read()
+    try:
+        image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
+    except:
+        print("Error converting to RGB")
+    video_show_inference(detection_model,image_np)
+
+    cv2.imshow("Video",frame)
+
+    if cv2.waitKey(10)==ord("q"):
+        break
+
+
+cap.release()
+cv2.destroyAllWindows()
+# for image_path in TEST_IMAGE_PATHS:
+#  show_inference(detection_model, image_path)
 
